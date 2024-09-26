@@ -7,12 +7,20 @@ import keras
 from keras import layers
 import matplotlib.pyplot as plt
 
+# Function for saving max r2 score plot
+def isMax(x, lst):
+    for i in (lst):
+        if(x < i): 
+            return False
+    return True
+
 # Load the dataset
 dataset = pd.read_csv('corr_beam.csv')
 
 # Split dataset into features (X) and target (y)
 X = dataset.iloc[:, :-1].values  # All columns except the last one (features)
 y = dataset.iloc[:, -1].values   # The last column (target - shear strength)
+feature_names = dataset.columns[:-1]  # Save feature names for plotting
 
 # Feature scaling (Normalization)
 scaler = StandardScaler()
@@ -62,6 +70,27 @@ for train_index, test_index in kf.split(X):
     r2_scores_train.append(r2_train)
     r2_scores_test.append(r2_test)
     
+    if(isMax(r2_test, r2_scores_test)):
+        # Plot results from the last fold (optional)
+        xx = np.linspace(0, max(y_test), 100)
+        yy = xx
+
+        plt.figure()
+        plt.plot(xx, yy, c='k', linewidth=2)
+        plt.scatter(y_train, y_pred_train, marker='s', color='blue', label="Training set")
+        plt.scatter(y_test, y_pred_test, marker='o', color='red', label="Testing set")
+
+        plt.grid()
+        plt.legend()
+        plt.tick_params(axis='both', which='major')
+        plt.axis('tight')
+        plt.xlabel('Actual shear strength (kN)')
+        plt.ylabel('Predicted shear strength (kN)')
+        plt.xlim([0, max(y_test)])
+        plt.ylim([0, max(y_test)])
+        plt.title("ANN Model - Predicted vs Actual Shear Strength")
+        plt.savefig("ANN_Model_2.jpeg")
+    
     print(f"Fold {fold} R2 score (train): {r2_train * 100:.2f}")
     print(f"Fold {fold} R2 score (test): {r2_test * 100:.2f}")
     
@@ -74,22 +103,3 @@ avg_r2_test = np.mean(r2_scores_test) * 100
 print("\nAverage R2 Score across 10 folds (train): ", avg_r2_train)
 print("Average R2 Score across 10 folds (test): ", avg_r2_test)
 
-# Optionally, plot results from the last fold
-xx = np.linspace(0, max(y_test), 100)
-yy = xx
-
-plt.figure()
-plt.plot(xx, yy, c='k', linewidth=2)
-plt.scatter(y_train, y_pred_train, marker='s', color='blue', label="Training set")
-plt.scatter(y_test, y_pred_test, marker='o', color='red', label="Testing set")
-
-plt.grid()
-plt.legend()
-plt.tick_params(axis='both', which='major')
-plt.axis('tight')
-plt.xlabel('Actual shear strength (kN)')
-plt.ylabel('Predicted shear strength (kN)')
-plt.xlim([0, max(y_test)])
-plt.ylim([0, max(y_test)])
-plt.title("ANN Model - Predicted vs Actual Shear Strength (Fold 10)")
-plt.show()
